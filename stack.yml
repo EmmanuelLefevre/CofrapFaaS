@@ -7,27 +7,20 @@ functions:
   generate-password:
     lang: python3
     handler: ./generate-password
-    image: cofrap/generate-password:latest
-  # generate-password:
-  #   lang: python3
-  #   handler: ./generate-password
-  #   image: ton-registry.local/generate-password:latest
+    # registre local sur le port 5000 au lieu de Docker Hub
+    image: 127.0.0.1:5000/generate-password:latest
 
   generate-mfa:
     lang: python3
     handler: ./generate-mfa
-    image: cofrap/generate-mfa:latest
-  # generate-mfa:
-  #   lang: python3
-  #   handler: ./generate-mfa
-  #   image: ton-registry.local/generate-mfa:latest
+    image: 127.0.0.1:5000/generate-mfa:latest
 
   verify-mfa:
     lang: python3
     handler: ./verify-mfa
-    image: cofrap/verify-mfa:latest
+    image: 127.0.0.1:5000/verify-mfa:latest
 
   login:
     lang: python3
     handler: ./login
-    image: cofrap/login:latest
+    image: 127.0.0.1:5000/login:latest
