@@ -1,21 +1,36 @@
 import json
+import psycopg2
 import pyotp
-# import psycopg2 # À décommenter pour ton vrai code BDD
 
+
+
+DB_CONFIG = "host=postgres-service port=5432 dbname=postgres user=postgres password=mon_mot_de_passe_secret"
 
 
 def get_mfa_secret_from_db(username: str) -> str:
-  """
-  SIMULATION DE TA BASE DE DONNÉES POSTGRESQL.
-  Ici, tu feras ton SELECT mfa_secret FROM users WHERE username = %s
-  """
-  # Pour le test, on imagine que c'est le secret généré par l'étape précédente
-  return "0$z4lµ6UYKK^oVzfm!hUwqP1" # Remplace par ton vrai secret de test si besoin
+  try:
+    conn = psycopg2.connect(DB_CONFIG)
+    with conn.cursor() as cur:
+      cur.execute(
+        "SELECT mfa_secret FROM users WHERE username = %s",
+        (username,)
+      )
+      row = cur.fetchone()
+
+    conn.close()
+
+    if row:
+      return row[0]
+
+    return None
+
+  except psycopg2.Error as e:
+    print(f"Erreur de connexion BDD : {e}")
+    return None
 
 
 
 def handle(req):
-  """Point d'entrée OpenFaaS"""
   try:
     if not req:
       return json.dumps({"status": "error", "message": "Requête vide"}), 400
@@ -27,15 +42,16 @@ def handle(req):
     if not username or not totp_code:
       return json.dumps({"status": "error", "message": "Paramètres manquants"}), 400
 
-    # 1. On récupère le secret en base de données
     mfa_secret = get_mfa_secret_from_db(username)
 
-    # 2. On vérifie le code avec pyotp
+    if not mfa_secret:
+      return json.dumps({"status": "error", "message": "Utilisateur introuvable ou sans secret MFA"}), 404
+
     totp = pyotp.TOTP(mfa_secret)
     is_valid = totp.verify(totp_code)
 
     if is_valid:
-      # TODO: Ici tu peux faire un UPDATE en base pour dire "Compte activé"
+      # NOTE: UPDATE en bdd pour activer le compte, etc
       return json.dumps({"status": "success", "valid": True}), 200
     else:
       return json.dumps({"status": "error", "message": "Code TOTP invalide"}), 401

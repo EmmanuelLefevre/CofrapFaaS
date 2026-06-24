@@ -1,3 +1,4 @@
+argon2-cffi
+qrcode[pil]
 pyotp
-qrcode
-Pillow
+psycopg2-binary
