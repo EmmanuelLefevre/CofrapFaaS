@@ -1,0 +1,33 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080 # URL de l'API Gateway sur k3s
+
+functions:
+  generate-password:
+    lang: python3
+    handler: ./generate-password
+    image: cofrap/generate-password:latest
+  # generate-password:
+  #   lang: python3
+  #   handler: ./generate-password
+  #   image: ton-registry.local/generate-password:latest
+
+  generate-mfa:
+    lang: python3
+    handler: ./generate-mfa
+    image: cofrap/generate-mfa:latest
+  # generate-mfa:
+  #   lang: python3
+  #   handler: ./generate-mfa
+  #   image: ton-registry.local/generate-mfa:latest
+
+  verify-mfa:
+    lang: python3
+    handler: ./verify-mfa
+    image: cofrap/verify-mfa:latest
+
+  login:
+    lang: python3
+    handler: ./login
+    image: cofrap/login:latest

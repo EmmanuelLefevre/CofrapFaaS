@@ -1,0 +1,3 @@
+argon2-cffi
+pyotp
+psycopg2-binary
