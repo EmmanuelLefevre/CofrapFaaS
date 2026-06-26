@@ -7,9 +7,7 @@ import pyotp
 import qrcode
 from argon2 import PasswordHasher
 
-
 ph = PasswordHasher()
-
 
 def get_db_connection():
   return psycopg2.connect(
@@ -22,7 +20,6 @@ def get_db_connection():
   )
 
 
-
 def generate_qr_base64(data: str) -> str:
   qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
   qr.add_data(data)
@@ -32,7 +29,6 @@ def generate_qr_base64(data: str) -> str:
   img.save(buffered, format="PNG")
 
   return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode('utf-8')}"
-
 
 
 def update_user_mfa_in_db(username: str, mfa_secret: str) -> bool:
@@ -54,7 +50,6 @@ def update_user_mfa_in_db(username: str, mfa_secret: str) -> bool:
     print(f"Erreur de mise à jour BDD : {e}")
 
     return False
-
 
 
 def handle(req):
