@@ -1,18 +1,27 @@
 import json
+import os
 import string
 import secrets
 import base64
 from io import BytesIO
 import psycopg2
-import pyotp
 import qrcode
 from argon2 import PasswordHasher
 
 
-
-DB_CONFIG = "host=postgres-service port=5432 dbname=postgres user=postgres password=mon_mot_de_passe_secret"
-
 ph = PasswordHasher()
+
+
+def get_db_connection():
+  return psycopg2.connect(
+    host=os.environ.get("DB_HOST", "postgres.default.svc.cluster.local"),
+    # host=os.environ.get("DB_HOST", "postgres-service"),
+    port=os.environ.get("DB_PORT", "5432"),
+    dbname=os.environ.get("DB_NAME", "cofrap"),
+    user=os.environ.get("DB_USER", "postgres"),
+    password=os.environ.get("DB_PASSWORD", "mon_mot_de_passe_secret")
+  )
+
 
 
 def generate_secure_password(length=24):
@@ -55,14 +64,14 @@ def generate_qr_base64(data: str) -> str:
   return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode('utf-8')}"
 
 
-def save_user_in_db(username: str, password_hashed: str, mfa_secret: str) -> bool:
+def save_user_in_db(username: str, password_hashed: str) -> bool:
   try:
-    conn = psycopg2.connect(DB_CONFIG)
+    conn = get_db_connection()
 
     with conn.cursor() as cur:
       cur.execute(
-        "INSERT INTO users (username, password, mfa_secret) VALUES (%s, %s, %s)",
-        (username, password_hashed, mfa_secret)
+        "INSERT INTO users (username, password) VALUES (%s, %s)",
+        (username, password_hashed)
       )
     conn.commit()
     conn.close()
@@ -78,32 +87,33 @@ def save_user_in_db(username: str, password_hashed: str, mfa_secret: str) -> boo
 
 def handle(req):
   try:
-    username = "unknown"
+    if not req:
+      return json.dumps({"status": "error", "message": "Requête vide"}), 400
 
-    if req:
-      try:
-        body = json.loads(req)
-        username = body.get("username", "unknown")
+    try:
+      body = json.loads(req)
+      username = body.get("username")
 
-      except json.JSONDecodeError:
-        pass
+    except json.JSONDecodeError:
+      return json.dumps({"status": "error", "message": "Format JSON invalide"}), 400
 
-      password_raw = generate_secure_password(24)
-      password_hashed = hash_password(password_raw)
-      password_qr = generate_qr_base64(password_raw)
-      mfa_secret = pyotp.random_base32()
+    if not username:
+      return json.dumps({"status": "error", "message": "Nom d'utilisateur requis"}), 400
 
-      db_success = save_user_in_db(username, password_hashed, mfa_secret)
+    password_raw = generate_secure_password(24)
+    password_hashed = hash_password(password_raw)
+    password_qr = generate_qr_base64(password_raw)
 
-      if not db_success:
-        return json.dumps({"status": "error", "message": "Erreur lors de l'insertion BDD"}), 500
+    db_success = save_user_in_db(username, password_hashed)
+
+    if not db_success:
+      return json.dumps({"status": "error", "message": "Erreur BDD ou utilisateur déjà existant"}), 500
 
     response = {
       "status": "success",
       "username": username,
       "passwordRaw": password_raw,
-      "passwordQrCode": password_qr,
-      "mfaSecret": mfa_secret
+      "passwordQrCode": password_qr
     }
 
     return json.dumps(response), 200
