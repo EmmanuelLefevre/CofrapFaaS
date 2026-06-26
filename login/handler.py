@@ -5,9 +5,7 @@ import psycopg2
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
-
 ph = PasswordHasher()
-
 
 def get_db_connection():
   return psycopg2.connect(
@@ -18,7 +16,6 @@ def get_db_connection():
     user=os.environ.get("DB_USER", "postgres"),
     password=os.environ.get("DB_PASSWORD", "mon_mot_de_passe_secret")
   )
-
 
 
 def get_user_data_from_db(username: str) -> dict:
@@ -47,7 +44,6 @@ def get_user_data_from_db(username: str) -> dict:
     print(f"Erreur de connexion BDD : {e}")
 
     return None
-
 
 
 def handle(req):
