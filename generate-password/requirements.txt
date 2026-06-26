@@ -2,4 +2,3 @@ argon2-cffi
 qrcode
 Pillow
 psycopg2-binary
-pyotp
