@@ -1,18 +1,29 @@
 import json
+import os
 import pyotp
 import psycopg2
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
+
 ph = PasswordHasher()
 
 
-DB_CONFIG = "host=postgres-service port=5432 dbname=postgres user=postgres password=mon_mot_de_passe_secret"
+def get_db_connection():
+  return psycopg2.connect(
+    host=os.environ.get("DB_HOST", "postgres.default.svc.cluster.local"),
+    # host=os.environ.get("DB_HOST", "postgres-service"),
+    port=os.environ.get("DB_PORT", "5432"),
+    dbname=os.environ.get("DB_NAME", "cofrap"),
+    user=os.environ.get("DB_USER", "postgres"),
+    password=os.environ.get("DB_PASSWORD", "mon_mot_de_passe_secret")
+  )
+
 
 
 def get_user_data_from_db(username: str) -> dict:
   try:
-    conn = psycopg2.connect(DB_CONFIG)
+    conn = get_db_connection()
 
     with conn.cursor() as cur:
       cur.execute(
@@ -44,10 +55,14 @@ def handle(req):
     if not req:
       return json.dumps({"status": "error", "message": "Requête vide"}), 400
 
-    body = json.loads(req)
-    username = body.get("username")
-    password_input = body.get("password")
-    totp_code = body.get("totpCode")
+    try:
+      body = json.loads(req)
+      username = body.get("username")
+      password_input = body.get("password")
+      totp_code = body.get("totpCode")
+
+    except json.JSONDecodeError:
+      return json.dumps({"status": "error", "message": "Format JSON invalide"}), 400
 
     if not username or not password_input or not totp_code:
       return json.dumps({"status": "error", "message": "Identifiants incomplets"}), 400
@@ -56,8 +71,12 @@ def handle(req):
     if not user_data:
       return json.dumps({"status": "error", "message": "Identifiants invalides"}), 401
 
+    if not user_data["mfa_secret"]:
+      return json.dumps({"status": "error", "message": "Identifiants invalides"}), 401
+
     try:
       ph.verify(user_data["password"], password_input)
+
     except VerifyMismatchError:
       return json.dumps({"status": "error", "message": "Identifiants invalides"}), 401
 
