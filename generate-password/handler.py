@@ -8,9 +8,7 @@ import psycopg2
 import qrcode
 from argon2 import PasswordHasher
 
-
 ph = PasswordHasher()
-
 
 def get_db_connection():
   return psycopg2.connect(
@@ -21,7 +19,6 @@ def get_db_connection():
     user=os.environ.get("DB_USER", "postgres"),
     password=os.environ.get("DB_PASSWORD", "mon_mot_de_passe_secret")
   )
-
 
 
 def generate_secure_password(length=24):
@@ -47,10 +44,8 @@ def generate_secure_password(length=24):
   return "".join(password)
 
 
-
 def hash_password(password: str) -> str:
   return ph.hash(password)
-
 
 
 def generate_qr_base64(data: str) -> str:
@@ -82,7 +77,6 @@ def save_user_in_db(username: str, password_hashed: str) -> bool:
     print(f"Erreur d'insertion BDD : {e}")
 
     return False
-
 
 
 def handle(req):
