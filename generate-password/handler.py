@@ -102,7 +102,6 @@ def handle(req):
       "status": "success",
       "username": username,
       "passwordRaw": password_raw,
-      "passwordHashed": password_hashed,
       "passwordQrCode": password_qr,
       "mfaSecret": mfa_secret
     }
