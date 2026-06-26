@@ -3,8 +3,6 @@ import os
 import psycopg2
 import pyotp
 
-
-
 def get_db_connection():
   return psycopg2.connect(
     host=os.environ.get("DB_HOST", "postgres.default.svc.cluster.local"),
@@ -14,7 +12,6 @@ def get_db_connection():
     user=os.environ.get("DB_USER", "postgres"),
     password=os.environ.get("DB_PASSWORD", "mon_mot_de_passe_secret")
   )
-
 
 
 def get_mfa_secret_from_db(username: str) -> str:
@@ -55,7 +52,6 @@ def activate_user_in_db(username: str) -> bool:
   except psycopg2.Error as e:
     print(f"Erreur activation BDD : {e}")
     return False
-
 
 
 def handle(req):
